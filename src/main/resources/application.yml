@@ -1,0 +1,46 @@
+# 공통 설정 — 프로필 무관하게 같은 값만 둔다. 프로필별 값은 application-local.yml / application-prod.yml
+spring:
+  application:
+    name: crowfoot-api-gateway
+  # 기본 프로필 — 지정 없이 기동하면 local. 운영은 SPRING_PROFILES_ACTIVE=prod (k8s)
+  profiles:
+    default: local
+  # 시크릿 파일 import는 프로필별로 나뉜다 — local은 .env-local, prod는 .env-prod (각 application-{profile}.yml). 모든 서버 리포 공통 규칙 (tech-stack.md Section 1.7)
+  # gateway가 현재 보관하는 시크릿은 없다 — 추가되는 값은 반드시 .env-local/.env-prod + ${ENV_VAR} 참조로만.
+  cloud:
+    gateway:
+      server:
+        webflux:                      # SCG 5.0 네임스페이스 — 구 spring.cloud.gateway.* 는 무시됨(설정 미반영)
+          httpclient:
+            response-timeout: 10s     # 다운스트림 응답 지연 방어 (03-gateway/requirements.md §4)
+          # 라우트 정의는 RouteLocatorConfig(RouteLocator 빈) — 기점은 프로필별 crowfoot.gateway.*-base-url
+          # catch-all 라우트 없음 — 미정의 경로는 Gateway가 404로 끊는다 (§3)
+          # allowedOrigins은 프로필별(local/prod yml) — 나머지 CORS 계약만 공통
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - PATCH
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders:
+                  - Authorization
+                  - Content-Type
+                  - X-REQUEST-ID
+                  - Idempotency-Key
+                allowCredentials: true                # 바인딩 키는 allow-credentials(세터 setAllowCredentials) — allowedOrigins/Methods와 어형이 달라 혼동 주의
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+crowfoot:
+  gateway:
+    validation-cache-ttl: 30s         # 상한 60s (생성자에서 clamp)
+    rate-limit:
+      requests-per-window: 100
+      window-seconds: 60
+      retry-after-seconds: 30

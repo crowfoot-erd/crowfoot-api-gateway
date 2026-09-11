@@ -1,0 +1,21 @@
+# E2E 테스트 — auth·core 기점은 각 테스트의 @DynamicPropertySource 가 MockWebServer 주소로 주입한다.
+# allowedOrigins은 공통 yml에 없다(프로필별) — 테스트가 기대하는 운영 Origin을 여기에 둔다.
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - https://crowfoot.java21.net
+crowfoot:
+  gateway:
+    # 라우트 빈 등록용 더미 기점(port 9 = discard) — 실제 기점은 각 테스트의 @DynamicPropertySource 가 주입한다.
+    # base-url은 프로필별(local/prod)이라 test 프로필 기본값이 필요하다.
+    auth-base-url: http://localhost:9
+    core-base-url: http://localhost:9
+logging:
+  level:
+    net.java21.crowfoot.gateway: DEBUG

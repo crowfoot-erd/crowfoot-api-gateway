@@ -1,0 +1,27 @@
+# 로컬 개발 — 다운스트림은 각 프로세스 포트(auth 8081 / core 8082), 프론트(Vite)는 8080.
+spring:
+  config:
+    import: "optional:file:.env-local[.properties]"   # 로컬 시크릿(gitignore) — 없으면 무시 (gateway는 현재 시크릿 없음)
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:       # 로컬 Vite 오리진 + 운영 오리진(리스트는 키 단위로 전체 대체되므로 함께 기재)
+                  - http://localhost:8080
+                  - https://crowfoot.java21.net
+
+crowfoot:
+  gateway:
+    auth-base-url: http://localhost:8081
+    core-base-url: http://localhost:8082
+
+logging:
+  level:
+    net.java21.crowfoot.gateway: DEBUG
+    org.springframework.cloud.gateway: INFO
+
+server:
+  port: 8000   # 로컬 개발 — 프로세스별 포트 분리(운영은 전부 8080)

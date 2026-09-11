@@ -1,0 +1,26 @@
+# 쿠버네티스 배포 — 클러스터 내 Service DNS 기점(같은 네임스페이스 내부 호출).
+# 서비스명은 배포 시 확정 — 환경변수로 덮을 수 있다:
+#   CROWFOOT_GATEWAY_AUTH_BASE_URL / CROWFOOT_GATEWAY_CORE_BASE_URL
+# auth-stub 스텁은 @Profile("auth-stub & !prod") 가드로 이 프로필에서는 빈 등록 자체가 안 된다.
+spring:
+  config:
+    import: "optional:file:.env-prod[.properties]"    # prod 프로필을 로컬에서 재현할 때만 사용 — k8s 운영은 Secret 환경변수 주입(파일 불필요)
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - https://crowfoot.java21.net
+crowfoot:
+  gateway:
+    # k8s Service가 80으로 서빙(프록시)하므로 URL에 포트 불필요 — 컨테이너 실제 서버 포트만 8080 (server.port)
+    auth-base-url: http://crowfoot-auth
+    core-base-url: http://crowfoot-core-api
+logging:
+  level:
+    net.java21.crowfoot.gateway: INFO
+server:
+  port: 8080   # 운영 — 모든 서버 8080

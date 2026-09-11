@@ -1,0 +1,6 @@
+# 간이 introspection 스텁 프로필 — auth 서버(8081) 미구현 시 로컬 검증용.
+# 기동: mvn spring-boot:run -Dspring-boot.run.profiles=local,auth-stub
+# 스텁 빈은 @Profile("auth-stub & !prod") 이중 가드로 운영에서 원천 차단된다.
+crowfoot:
+  gateway:
+    auth-base-url: http://localhost:8000/stub
