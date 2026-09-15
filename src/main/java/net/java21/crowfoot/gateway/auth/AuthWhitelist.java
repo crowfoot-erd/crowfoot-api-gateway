@@ -21,7 +21,8 @@ public class AuthWhitelist {
             new Entry(HttpMethod.POST, "/api/v1/auth/oauth2/*/token"), // OAuth2 토큰 교환 — 프론트 콜백 구조(콜백은 프론트 /auth/callback, code 교환은 이 API)
             new Entry(HttpMethod.POST, "/api/v1/auth/refresh-token"),  // 재발급
             new Entry(HttpMethod.POST, "/api/v1/auth/logout"),         // 로그아웃
-            new Entry(HttpMethod.GET, "/api/v1/core/providers")        // core 공개 — 활성 제공자 목록
+            new Entry(HttpMethod.GET, "/api/v1/core/providers"),       // core 공개 — 활성 제공자 목록
+            new Entry(HttpMethod.GET, "/api/v1/core/shares/*")         // core 공개 — 공유 문서 조회(토큰이 자격, 08-core/02-model.md §1.10)
     );
 
     private final AntPathMatcher matcher = new AntPathMatcher();

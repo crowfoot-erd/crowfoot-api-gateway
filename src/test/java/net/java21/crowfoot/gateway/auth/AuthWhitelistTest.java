@@ -15,7 +15,7 @@ class AuthWhitelistTest {
     private final AuthWhitelist whitelist = new AuthWhitelist();
 
     @Test
-    @DisplayName("화이트리스트 5쌍은 (메서드, 경로) 모두 일치할 때 통과한다")
+    @DisplayName("화이트리스트 6쌍은 (메서드, 경로) 모두 일치할 때 통과한다")
     void matches_whitelistedMethodAndPath_returnsTrue() {
         // given // when // then
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/auth/oauth2/google")).isTrue();
@@ -23,6 +23,7 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/auth/refresh-token")).isTrue();
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/auth/logout")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/providers")).isTrue();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/Ab3xYz0123456789QrStUv")).isTrue();
     }
 
     @ParameterizedTest
@@ -45,6 +46,7 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.PUT, "/api/v1/auth/refresh-token")).isFalse();
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/providers")).isFalse();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/auth/oauth2/github/token")).isFalse();
+        assertThat(whitelist.matches(HttpMethod.DELETE, "/api/v1/core/shares/Ab3xYz0123456789QrStUv")).isFalse();
     }
 
     @Test
@@ -56,6 +58,8 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/auth/oauth2")).isFalse();
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v2/auth/refresh-token")).isFalse();
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/auth/oauth2/github/tokens")).isFalse();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/tok/extra")).isFalse();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/sharess/tok")).isFalse();
     }
 
     @Test
