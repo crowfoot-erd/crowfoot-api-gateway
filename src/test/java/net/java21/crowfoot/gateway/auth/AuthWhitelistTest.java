@@ -15,7 +15,7 @@ class AuthWhitelistTest {
     private final AuthWhitelist whitelist = new AuthWhitelist();
 
     @Test
-    @DisplayName("화이트리스트 6쌍은 (메서드, 경로) 모두 일치할 때 통과한다")
+    @DisplayName("화이트리스트 7쌍은 (메서드, 경로) 모두 일치할 때 통과한다")
     void matches_whitelistedMethodAndPath_returnsTrue() {
         // given // when // then
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/auth/oauth2/google")).isTrue();
@@ -24,6 +24,7 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/auth/logout")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/providers")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/Ab3xYz0123456789QrStUv")).isTrue();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares")).isTrue();
     }
 
     @ParameterizedTest
@@ -47,6 +48,7 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/providers")).isFalse();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/auth/oauth2/github/token")).isFalse();
         assertThat(whitelist.matches(HttpMethod.DELETE, "/api/v1/core/shares/Ab3xYz0123456789QrStUv")).isFalse();
+        assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/shares")).isFalse();
     }
 
     @Test
