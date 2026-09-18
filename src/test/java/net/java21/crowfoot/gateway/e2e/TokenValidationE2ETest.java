@@ -99,6 +99,26 @@ class TokenValidationE2ETest {
     }
 
     @Test
+    @DisplayName("릴리스 노트 공개 조회는 토큰 없이 core로 라우팅된다 — 인증 서버 미호출")
+    void releaseNotesWhitelistPath_withoutToken_routesToCore() throws Exception {
+        // given
+        coreServer.enqueue(MockResponses.downstreamOk());
+        int authCallsBefore = authServer.getRequestCount();
+
+        // when // then
+        webTestClient.get().uri("/api/v1/core/community/release-notes/recent")
+                .exchange()
+                .expectStatus().isOk();
+
+        RecordedRequest forwarded = coreServer.takeRequest(1, TimeUnit.SECONDS);
+        assertThat(forwarded).isNotNull();
+        assertThat(forwarded.getMethod()).isEqualTo("GET");
+        assertThat(forwarded.getPath()).isEqualTo("/core/community/release-notes/recent"); // StripPrefix=2
+        assertThat(forwarded.getHeader("X-USER-ID")).isNull();                              // 무토큰 → 미주입
+        assertThat(authServer.getRequestCount()).isEqualTo(authCallsBefore);               // introspection 미호출
+    }
+
+    @Test
     @DisplayName("보호 경로 무토큰은 401 AUTH_TOKEN_INVALID + WWW-Authenticate: Bearer — 인증 서버 미호출")
     void protectedPath_withoutToken_rejected401WithoutIntrospection() {
         // given

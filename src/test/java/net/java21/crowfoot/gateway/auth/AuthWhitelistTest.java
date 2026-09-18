@@ -15,7 +15,7 @@ class AuthWhitelistTest {
     private final AuthWhitelist whitelist = new AuthWhitelist();
 
     @Test
-    @DisplayName("화이트리스트 7쌍은 (메서드, 경로) 모두 일치할 때 통과한다")
+    @DisplayName("화이트리스트 8쌍은 (메서드, 경로) 모두 일치할 때 통과한다")
     void matches_whitelistedMethodAndPath_returnsTrue() {
         // given // when // then
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/auth/oauth2/google")).isTrue();
@@ -25,6 +25,8 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/providers")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/Ab3xYz0123456789QrStUv")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares")).isTrue();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/release-notes/recent")).isTrue();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/release-notes/9")).isTrue();
     }
 
     @ParameterizedTest
@@ -49,6 +51,7 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/auth/oauth2/github/token")).isFalse();
         assertThat(whitelist.matches(HttpMethod.DELETE, "/api/v1/core/shares/Ab3xYz0123456789QrStUv")).isFalse();
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/shares")).isFalse();
+        assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/community/release-notes/9")).isFalse(); // 쓰기는 보호
     }
 
     @Test
@@ -62,6 +65,11 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/auth/oauth2/github/tokens")).isFalse();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/tok/extra")).isFalse();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/sharess/tok")).isFalse();
+        // 릴리스 노트 공개 경계 — bare 경로(*는 0세그먼트 미매칭)·깊은 하위 경로·오타·인증 커뮤니티 조회
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/release-notes")).isFalse();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/release-notes/9/extra")).isFalse();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/release-notess/9")).isFalse();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/posts/recent")).isFalse();
     }
 
     @Test
