@@ -14,4 +14,9 @@ public record GatewayErrorResponse(Header header) {
     public static GatewayErrorResponse of(GatewayError error) {
         return new GatewayErrorResponse(new Header(false, error.resultCode(), error.resultMessage()));
     }
+
+    /** resultMessage를 Accept-Language 해석 문구로 바꿔 친다 (api-design.md §5.7 — resultCode 불변) */
+    public static GatewayErrorResponse of(GatewayError error, String resultMessage) {
+        return new GatewayErrorResponse(new Header(false, error.resultCode(), resultMessage));
+    }
 }

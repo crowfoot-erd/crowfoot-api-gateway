@@ -3,6 +3,7 @@ package net.java21.crowfoot.gateway.error;
 import lombok.extern.slf4j.Slf4j;
 import net.java21.crowfoot.gateway.common.GatewayError;
 import net.java21.crowfoot.gateway.common.GatewayErrorResponse;
+import net.java21.crowfoot.gateway.common.GatewayMessages;
 import net.java21.crowfoot.gateway.common.GatewayRejectedException;
 import org.springframework.boot.webflux.error.ErrorWebExceptionHandler;
 import org.springframework.cloud.gateway.support.NotFoundException;
@@ -32,9 +33,11 @@ import java.util.concurrent.TimeoutException;
 public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler {
 
     private final ObjectMapper objectMapper;
+    private final GatewayMessages gatewayMessages;
 
-    public GatewayErrorWebExceptionHandler(ObjectMapper objectMapper) {
+    public GatewayErrorWebExceptionHandler(ObjectMapper objectMapper, GatewayMessages gatewayMessages) {
         this.objectMapper = objectMapper;
+        this.gatewayMessages = gatewayMessages;
     }
 
     @Override
@@ -56,7 +59,9 @@ public class GatewayErrorWebExceptionHandler implements ErrorWebExceptionHandler
             response.getHeaders().set(HttpHeaders.RETRY_AFTER, String.valueOf(rejection.retryAfterSeconds()));
         }
 
-        byte[] body = objectMapper.writeValueAsBytes(GatewayErrorResponse.of(rejection.error()));
+        byte[] body = objectMapper.writeValueAsBytes(GatewayErrorResponse.of(rejection.error(),
+                gatewayMessages.resolve(rejection.error(),
+                        exchange.getRequest().getHeaders().getFirst(HttpHeaders.ACCEPT_LANGUAGE))));
         return response.writeWith(Mono.just(response.bufferFactory().wrap(body)));
     }
 

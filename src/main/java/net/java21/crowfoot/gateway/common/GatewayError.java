@@ -59,4 +59,9 @@ public enum GatewayError {
     public String resultMessage() {
         return resultMessage;
     }
+
+    /** 번들 키 — i18n/messages_{ko,en,ja,zh}.properties의 gateway.{상수명 소문자} (api.md §1) */
+    public String messageKey() {
+        return "gateway." + name().toLowerCase(java.util.Locale.ROOT);
+    }
 }
