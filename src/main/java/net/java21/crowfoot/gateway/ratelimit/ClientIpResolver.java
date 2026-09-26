@@ -21,6 +21,10 @@ import java.util.regex.Pattern;
  * 요청에 한해 그 프록시가 남긴 {@code X-Forwarded-For} 첫 홉(= 실제 클라이언트 IP)을 키로 쓴다.
  * SCG 5.0 부터는 trusted-proxies 미설정 시 게이트웨이가 X-Forwarded-* 를 아예 제거하므로,
  * 이 등록이 없으면 rate limit 키가 프록시 주소로 수렴한다(전 사용자 공유 버킷).
+ *
+ * <p>운영 실측(2026-09-26): 이 배포의 전단(호스트 Nginx → NodePort)은 클라이언트 소스 IP 를
+ * 보존해 전달한다 — 게이트웨이의 직접 peer 가 실제 클라이언트 공인 IP 로 관측된다(비신뢰 폐기 로그).
+ * 이 토폴로지에서는 {@link #resolve} 의 소켓 주소 폴백이 곧 클라이언트 IP 다(위조 불가).
  */
 @Component
 public class ClientIpResolver {

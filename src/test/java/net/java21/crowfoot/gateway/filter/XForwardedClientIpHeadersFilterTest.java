@@ -21,8 +21,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * X-Forwarded-For 클라이언트 IP 복원 — SCG 5.0 이 peer 체인으로 재구성한 헤더 뒤에
- * 신뢰 소스 요청의 원본 첫 홉을 맨 앞에 붙인다 (비신뢰 소스는 SCG 제거 상태 유지).
+ * X-Forwarded-For 클라이언트 IP 복원 — 신뢰 프록시 경유면 SCG 5.0 이 재구성한 peer 체인 앞에
+ * 원본 첫 홉을 붙이고, 소스 보존 직접 수신(운영 토폴로지 — peer = 실제 클라이언트)이면
+ * 소켓 주소를 그대로 하류 X-Forwarded-For 로 materialize 한다.
  */
 class XForwardedClientIpHeadersFilterTest {
 
@@ -74,18 +75,17 @@ class XForwardedClientIpHeadersFilterTest {
     }
 
     @Test
-    @DisplayName("비신뢰 소스는 SCG 가 제거한 상태를 그대로 둔다")
-    void untrustedSource_keepsStrippedState() {
-        HttpHeaders headers = rewrittenByScg("10.42.1.5");
+    @DisplayName("비신뢰(직접 수신) 소스는 위조 불가능한 소켓 주소를 XFF 로 내려보낸다")
+    void untrustedSource_forwardsSocketAddressAsXff() {
+        // 운영 토폴로지: 전단이 소스 IP 를 보존해 peer = 실제 클라이언트(여기선 127.0.0.1), SCG 는 XFF 를 제거한 상태
         HttpHeaders result = filterWith("10\\..*")
-                .filter(headers, exchangeFrom("203.0.113.9"));
+                .filter(new HttpHeaders(), exchangeFrom("203.0.113.9"));
 
-        assertThat(result).isSameAs(headers);
-        assertThat(result.getFirst("X-Forwarded-For")).isEqualTo("10.42.1.5");
+        assertThat(result.getFirst("X-Forwarded-For")).isEqualTo("127.0.0.1");
     }
 
     @Test
-    @DisplayName("신뢰 소스라도 원본 XFF 가 없으면 그대로 둔다")
+    @DisplayName("신뢰 소스라도 원본 XFF 가 없으면(peer 본인 요청) 중복 없이 그대로 둔다")
     void trustedSourceWithoutOriginalXff_unchanged() {
         HttpHeaders headers = rewrittenByScg("127.0.0.1");
         HttpHeaders result = filterWith("127\\.0\\.0\\.1")
@@ -95,13 +95,12 @@ class XForwardedClientIpHeadersFilterTest {
     }
 
     @Test
-    @DisplayName("trusted-proxies 미설정이면 동작하지 않는다")
-    void noTrustedProxies_inactive() {
-        HttpHeaders headers = rewrittenByScg("127.0.0.1");
+    @DisplayName("trusted-proxies 미설정이어도 소켓 주소는 전달한다")
+    void noTrustedProxies_stillForwardsSocketAddress() {
         HttpHeaders result = filterWith(null)
-                .filter(headers, exchangeFrom("203.0.113.9"));
+                .filter(new HttpHeaders(), exchangeFrom(null));
 
-        assertThat(result).isSameAs(headers);
+        assertThat(result.getFirst("X-Forwarded-For")).isEqualTo("127.0.0.1");
     }
 
     @Test
