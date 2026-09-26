@@ -15,7 +15,7 @@ class AuthWhitelistTest {
     private final AuthWhitelist whitelist = new AuthWhitelist();
 
     @Test
-    @DisplayName("화이트리스트 9쌍은 (메서드, 경로) 모두 일치할 때 통과한다")
+    @DisplayName("화이트리스트 10쌍은 (메서드, 경로) 모두 일치할 때 통과한다")
     void matches_whitelistedMethodAndPath_returnsTrue() {
         // given // when // then
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/auth/oauth2/google")).isTrue();
@@ -28,6 +28,7 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/release-notes/recent")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/release-notes/9")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/templates")).isTrue();
+        assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/metrics/visit")).isTrue();
     }
 
     @ParameterizedTest
@@ -54,6 +55,7 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/shares")).isFalse();
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/community/release-notes/9")).isFalse(); // 쓰기는 보호
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/templates")).isFalse(); // 복제 등 쓰기는 보호
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/metrics/visit")).isFalse(); // 조회형 오남용 차단
     }
 
     @Test
@@ -75,6 +77,10 @@ class AuthWhitelistTest {
         // 템플릿 공개 경계 — 하위 경로·오타는 미매칭(원천은 bare 경로뿐)
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/templates/extra")).isFalse();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/templatess")).isFalse();
+        // 비콘 공개 경계 — 하위 경로·bare 경로·관리자 조회는 미매칭
+        assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/metrics/visit/extra")).isFalse();
+        assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/metrics")).isFalse();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/admin/metrics/summary")).isFalse(); // 관리자 통계는 보호
     }
 
     @Test
