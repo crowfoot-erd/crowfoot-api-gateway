@@ -6,6 +6,9 @@ spring:
     gateway:
       server:
         webflux:
+          # SCG 5.0 — X-Forwarded-* 생성·신뢰의 전제(단일 정규식 full-match). 로컬은 전단 프록시가 없으므로
+          # 루프백만 신뢰 소스로 등록해 표준 X-Forwarded-* 생성 경로만 운영과 동일하게 맞춘다.
+          trusted-proxies: '127\.0\.0\.1'
           globalcors:
             cors-configurations:
               '[/**]':

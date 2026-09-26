@@ -5,6 +5,8 @@ spring:
     gateway:
       server:
         webflux:
+          # X-Forwarded-* 전달 검증용 — 테스트 클라이언트(WebTestClient)는 127.0.0.1 에서 접속한다
+          trusted-proxies: '127\.0\.0\.1'
           globalcors:
             cors-configurations:
               '[/**]':

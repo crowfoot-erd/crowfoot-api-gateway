@@ -9,6 +9,10 @@ spring:
     gateway:
       server:
         webflux:
+          # SCG 5.0 — 인그레스(파드·노드 사설망)만 신뢰 소스로 등록한다(단일 정규식 full-match, CIDR 불가).
+          # 등록돼야 X-Forwarded-* 가 하류로 생성되고, 비신뢰 소스의 위조 XFF 는 제거된다.
+          # 클라이언트 IP 복원은 XForwardedClientIpHeadersFilter 가 담당한다.
+          trusted-proxies: '10\..*|192\.168\..*|172\.(1[6-9]|2[0-9]|3[01])\..*'
           globalcors:
             cors-configurations:
               '[/**]':
