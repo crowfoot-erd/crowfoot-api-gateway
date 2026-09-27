@@ -3,6 +3,7 @@ package net.java21.crowfoot.gateway.filter;
 import lombok.RequiredArgsConstructor;
 import net.java21.crowfoot.gateway.auth.AuthWhitelist;
 import net.java21.crowfoot.gateway.auth.IntrospectionClient;
+import net.java21.crowfoot.gateway.auth.OptionalAuthMatcher;
 import net.java21.crowfoot.gateway.auth.TokenValidationCache;
 import net.java21.crowfoot.gateway.common.GatewayError;
 import net.java21.crowfoot.gateway.common.GatewayRejectedException;
@@ -28,9 +29,10 @@ import java.util.Optional;
  * (2026-09-11 확정: 검증 책임의 명확한 분리). 만료/무효 구분도 인증 서버가 내려주는
  * {@code inactiveReason}(EXPIRED/REVOKED/INVALID)으로 판정한다.
  *
- * <p>순서: ① 화이트리스트 판정(외부 경로 기준) ② Bearer 스킴 확인 ③ 검증 캐시 조회(토큰 SHA-256 해시 키)
- * ④ Introspection 위임 — 활성이면 캐시 저장 후 sub 주입, 비활성이면 inactiveReason 에 따라 401,
- * 장애면 fail-closed 503.
+ * <p>순서: ① 화이트리스트 판정(외부 경로 기준) ② 선택 인증 경로의 무토큰 통과(공유 댓글 — 비회원)
+ * ③ Bearer 스킴 확인 ④ 검증 캐시 조회(토큰 SHA-256 해시 키) ⑤ Introspection 위임 — 활성이면 캐시 저장 후
+ * sub 주입, 비활성이면 inactiveReason 에 따라 401, 장애면 fail-closed 503. 선택 인증 경로에
+ * 토큰이 실리면 다른 경로와 같은 검증을 통과한다 — 무효 토큰으로 익명 행세할 수 없다.
  *
  * <p>신뢰 경계: 모든 요청(화이트리스트 포함)에서 외부 유입 {@code X-USER-ID}를 먼저 제거하고,
  * 검증 성공 시에만 introspection 결과의 sub 로 주입한다 (testing.md AUTH-16).
@@ -46,6 +48,7 @@ public class AuthenticationGlobalFilter implements GlobalFilter, Ordered {
     private static final String REASON_EXPIRED = "EXPIRED";
 
     private final AuthWhitelist whitelist;
+    private final OptionalAuthMatcher optionalAuth;
     private final TokenValidationCache validationCache;
     private final IntrospectionClient introspectionClient;
 
@@ -61,6 +64,9 @@ public class AuthenticationGlobalFilter implements GlobalFilter, Ordered {
 
         String token = bearerToken(request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION));
         if (token == null) {
+            if (optionalAuth.matches(request.getMethod(), request.getPath().value())) {
+                return chain.filter(with(exchange, mutated));   // 비회원 통과 — X-USER-ID 없이(1.10.7 선택 인증)
+            }
             return reject(GatewayError.TOKEN_MISSING, "Bearer");
         }
 

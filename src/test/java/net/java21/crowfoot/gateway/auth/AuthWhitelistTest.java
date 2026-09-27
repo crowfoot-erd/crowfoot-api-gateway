@@ -15,7 +15,7 @@ class AuthWhitelistTest {
     private final AuthWhitelist whitelist = new AuthWhitelist();
 
     @Test
-    @DisplayName("화이트리스트 14쌍은 (메서드, 경로) 모두 일치할 때 통과한다")
+    @DisplayName("화이트리스트 11쌍은 (메서드, 경로) 모두 일치할 때 통과한다")
     void matches_whitelistedMethodAndPath_returnsTrue() {
         // given // when // then
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/auth/oauth2/google")).isTrue();
@@ -24,10 +24,7 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/auth/logout")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/providers")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/Ab3xYz0123456789QrStUv")).isTrue();
-        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/comments")).isTrue();
-        assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/comments")).isTrue();
-        assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/reactions")).isTrue();
-        assertThat(whitelist.matches(HttpMethod.DELETE, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/comments/31")).isTrue();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/ddl")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/release-notes/recent")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/release-notes/9")).isTrue();
@@ -56,8 +53,10 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/providers")).isFalse();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/auth/oauth2/github/token")).isFalse();
         assertThat(whitelist.matches(HttpMethod.DELETE, "/api/v1/core/shares/Ab3xYz0123456789QrStUv")).isFalse();
-        assertThat(whitelist.matches(HttpMethod.PATCH, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/comments")).isFalse(); // 댓글 수정 API는 없다
+        assertThat(whitelist.matches(HttpMethod.PATCH, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/comments")).isFalse(); // PATCH 댓글 API는 없다
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/reactions")).isFalse(); // 반응 상태 조회형 오남용 차단(초기화는 GET comments에 동봉)
+        assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/reactions")).isFalse(); // 회원전용(§1.10.6) — 선택 인증 목록(OptionalAuthMatcher) 소관
+        assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/ddl")).isFalse(); // DDL은 조회(GET) 전용
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/shares")).isFalse();
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/community/release-notes/9")).isFalse(); // 쓰기는 보호
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/templates")).isFalse(); // 복제 등 쓰기는 보호
@@ -75,10 +74,11 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/auth/oauth2/github/tokens")).isFalse();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/tok/extra")).isFalse();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/sharess/tok")).isFalse();
-        // 피드백 공개 경계 — 와일드카드 수 불일치(POST comments는 1세그먼트 패턴)·패턴 초과 깊이
+        // 피드백 공개 경계 — 와일드카드 수 불일치·패턴 초과 깊이 (comments 4쌍은 선택 인증 목록이라 여기 없다)
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/shares/tok/comments/31")).isFalse(); // 댓글 등록은 목록 경로까지만
         assertThat(whitelist.matches(HttpMethod.DELETE, "/api/v1/core/shares/tok/comments/31/extra")).isFalse();
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/shares/tok/reactions/extra")).isFalse();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/tok/ddl/extra")).isFalse(); // DDL은 1세그먼트 토큰까지만
         // 릴리스 노트 공개 경계 — bare 경로(*는 0세그먼트 미매칭)·깊은 하위 경로·오타·인증 커뮤니티 조회
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/release-notes")).isFalse();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/release-notes/9/extra")).isFalse();

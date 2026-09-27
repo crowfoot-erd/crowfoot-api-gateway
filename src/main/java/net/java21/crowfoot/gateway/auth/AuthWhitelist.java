@@ -12,6 +12,8 @@ import java.util.List;
  *
  * <p>매칭은 (메서드, 경로) 쌍 단위 — 같은 경로라도 다른 메서드는 기본 거부 대상이다.
  * 판정은 rewrite 이전의 외부 경로(/api/v1/...) 기준 (requirements §3).
+ *
+ * <p>토큰이 있을 때만 검증하는 선택 인증 경로(공유 댓글)는 {@link OptionalAuthMatcher} 소관이다.
  */
 @Component
 public class AuthWhitelist {
@@ -23,10 +25,7 @@ public class AuthWhitelist {
             new Entry(HttpMethod.POST, "/api/v1/auth/logout"),         // 로그아웃
             new Entry(HttpMethod.GET, "/api/v1/core/providers"),       // core 공개 — 활성 제공자 목록
             new Entry(HttpMethod.GET, "/api/v1/core/shares/*"),        // core 공개 — 공유 문서 조회(토큰이 자격, 08-core/02-model.md §1.10)
-            new Entry(HttpMethod.GET, "/api/v1/core/shares/*/comments"),     // core 공개 — 피드백 초기화: 반응 상태+댓글 목록(§1.10.7)
-            new Entry(HttpMethod.POST, "/api/v1/core/shares/*/comments"),    // core 공개 — 익명 댓글 등록(§1.10.7. 남용 방어는 레이트리밋에 위임)
-            new Entry(HttpMethod.POST, "/api/v1/core/shares/*/reactions"),   // core 공개 — 반응 토글(§1.10.6. 남용 방어는 레이트리밋에 위임)
-            new Entry(HttpMethod.DELETE, "/api/v1/core/shares/*/comments/*"),// core 공개 — 익명 본인 댓글 삭제(§1.10.7. 쿠키 visitor_key 판정은 core가)
+            new Entry(HttpMethod.GET, "/api/v1/core/shares/*/ddl"),    // core 공개 — 공개 DDL 생성(§1.10.8. 신원 불필요라 무토큰 통과)
             new Entry(HttpMethod.GET, "/api/v1/core/shares"),          // core 공개 — 공유 갤러리 목록(08-core/02-model.md §1.10.5)
             new Entry(HttpMethod.GET, "/api/v1/core/community/release-notes/*"), // core 공개 — 릴리스 노트 공개 조회(recent·상세, 08-core/08-community.md §3.11)
             new Entry(HttpMethod.GET, "/api/v1/core/templates"),      // core 공개 — 템플릿 목록(복제는 POST라 보호, 08-core/09-templates.md §2.1)
