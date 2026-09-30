@@ -19,7 +19,7 @@ import java.io.IOException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 라우팅 E2E (03-gateway/testing.md AUTH-13) — RouteLocator 빈(auth/core) + StripPrefix=2 검증.
+ * 라우팅 E2E (00-environment/testing.md §10.3 AUTH-13) — RouteLocator 빈(auth/core) + StripPrefix=2 검증.
  * 하류는 MockWebServer 목으로 대체한다.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 토큰 검증 E2E (03-gateway/testing.md AUTH-15/16/17/20/22).
+ * 토큰 검증 E2E (00-environment/testing.md §10.3 AUTH-15/16/17/20/22).
  *
  * <p>검증 책임은 전부 인증 서버 introspection 에 있다 — 만료/무효 구분도 목 응답의
  * inactiveReason 으로 검증한다 (2026-09-11 책임 분리 확정). 인증 서버는 MockWebServer 목.
