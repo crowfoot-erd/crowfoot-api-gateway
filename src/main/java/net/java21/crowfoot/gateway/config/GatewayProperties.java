@@ -10,6 +10,8 @@ import java.time.Duration;
  * @param authBaseUrl        인증 서버 내부 기점 (POST {auth-base-url}/internal/auth/introspect) —
  *                           로컬은 지정 포트, prod(쿠버네티스)는 Service DNS
  * @param coreBaseUrl        core 서버 기점
+ * @param databaseManagerBaseUrl DB 매니저(crowfoot-database-manager) 기점 — 데이터 브라우저
+ *                           (09-database-manager/00-data-browser.md Section 1.5)
  * @param validationCacheTtl 검증 캐시 TTL — 기본 30초, 상한 60초 (03-gateway/requirements.md §2)
  * @param rateLimit          IP 단위 고정창 rate limit (§4 — 수치는 프로퍼티로 관리)
  */
@@ -17,6 +19,7 @@ import java.time.Duration;
 public record GatewayProperties(
         String authBaseUrl,
         String coreBaseUrl,
+        String databaseManagerBaseUrl,
         Duration validationCacheTtl,
         RateLimit rateLimit
 ) {

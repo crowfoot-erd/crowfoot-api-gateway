@@ -20,6 +20,7 @@ crowfoot:
   gateway:
     auth-base-url: http://localhost:8081
     core-base-url: http://localhost:8082
+    database-manager-base-url: http://localhost:8084
 
 logging:
   level:

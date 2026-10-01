@@ -23,6 +23,7 @@ crowfoot:
     # k8s Service가 80으로 서빙(프록시)하므로 URL에 포트 불필요 — 컨테이너 실제 서버 포트만 8080 (server.port)
     auth-base-url: http://crowfoot-auth
     core-base-url: http://crowfoot-core-api
+    database-manager-base-url: http://crowfoot-database-manager
 logging:
   level:
     net.java21.crowfoot.gateway: INFO

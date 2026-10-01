@@ -1,6 +1,7 @@
 package net.java21.crowfoot.gateway.e2e;
 
 import net.java21.crowfoot.gateway.testsupport.MockResponses;
+import net.java21.crowfoot.gateway.testsupport.TestTokenFactory;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.AfterAll;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -28,6 +30,7 @@ class GatewayRoutingTest {
 
     private static final MockWebServer authServer = start();
     private static final MockWebServer coreServer = start();
+    private static final MockWebServer databaseManagerServer = start();
 
     private static MockWebServer start() {
         try {
@@ -43,12 +46,15 @@ class GatewayRoutingTest {
     static void downstreamUrls(DynamicPropertyRegistry registry) {
         registry.add("crowfoot.gateway.auth-base-url", () -> "http://localhost:" + authServer.getPort());
         registry.add("crowfoot.gateway.core-base-url", () -> "http://localhost:" + coreServer.getPort());
+        registry.add("crowfoot.gateway.database-manager-base-url",
+                () -> "http://localhost:" + databaseManagerServer.getPort());
     }
 
     @AfterAll
     static void tearDown() throws IOException {
         authServer.shutdown();
         coreServer.shutdown();
+        databaseManagerServer.shutdown();
     }
 
     @LocalServerPort
@@ -92,6 +98,41 @@ class GatewayRoutingTest {
 
         RecordedRequest recorded = authServer.takeRequest();
         assertThat(recorded.getPath()).isEqualTo("/auth/refresh-token");
+    }
+
+    @Test
+    @DisplayName("DB 매니저 라우트는 /api/v1/database-manager/** 를 /database-manager/** 로 재작성하고 X-USER-ID 를 붙여 전달한다")
+    void databaseManagerRoute_stripsTwoSegments_andInjectsUserId() throws InterruptedException {
+        // given — 보호 경로다: 토큰 검증(introspection)을 통과해야 하류로 간다
+        authServer.enqueue(MockResponses.activeIntrospection("1001", "jti-dbm-1"));
+        databaseManagerServer.enqueue(MockResponses.downstreamOk());
+        String token = TestTokenFactory.access("1001", "jti-dbm-1", 9_999_999_999L);
+
+        // when // then
+        webTestClient.post().uri("/api/v1/database-manager/workspaces/34/connections/302/objects")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .exchange()
+                .expectStatus().isOk();
+
+        RecordedRequest recorded = databaseManagerServer.takeRequest();
+        assertThat(recorded.getPath()).isEqualTo("/database-manager/workspaces/34/connections/302/objects");
+        assertThat(recorded.getHeader("X-USER-ID")).isEqualTo("1001");
+    }
+
+    @Test
+    @DisplayName("DB 매니저 경로는 공개 경로가 없다 — 토큰 없이는 401, 하류로 가지 않는다")
+    void databaseManagerRoute_withoutToken_rejected401() {
+        // given
+        int before = databaseManagerServer.getRequestCount();
+
+        // when // then
+        webTestClient.post().uri("/api/v1/database-manager/workspaces/34/connections/302/objects")
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.header.resultCode").isEqualTo("AUTH_TOKEN_INVALID");
+
+        assertThat(databaseManagerServer.getRequestCount()).isEqualTo(before);
     }
 
     @Test

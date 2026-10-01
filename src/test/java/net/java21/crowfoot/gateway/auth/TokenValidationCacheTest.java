@@ -18,7 +18,7 @@ class TokenValidationCacheTest {
 
     private final MutableClock clock = new MutableClock(NOW);
     private final TokenValidationCache cache = new TokenValidationCache(
-            clock, new GatewayProperties(null, null, TTL, null));
+            clock, new GatewayProperties(null, null, null, TTL, null));
 
     @Test
     @DisplayName("저장된 검증 결과는 TTL 내에 조회된다")

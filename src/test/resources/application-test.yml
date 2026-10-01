@@ -18,6 +18,7 @@ crowfoot:
     # base-url은 프로필별(local/prod)이라 test 프로필 기본값이 필요하다.
     auth-base-url: http://localhost:9
     core-base-url: http://localhost:9
+    database-manager-base-url: http://localhost:9
 logging:
   level:
     net.java21.crowfoot.gateway: DEBUG
