@@ -55,7 +55,7 @@ public class IntrospectionClient {
             throw new IllegalArgumentException("active response without sub");
         }
         return new IntrospectionResult(response.active(), response.sub(), response.jti(),
-                response.exp(), response.inactiveReason());
+                response.exp(), response.inactiveReason(), response.typ(), response.workspaceId(), response.tokenId());
     }
 
     /**
@@ -64,7 +64,16 @@ public class IntrospectionClient {
      * @param jti            검증 정보 참고용
      * @param exp            토큰 만료 시각(epoch seconds) — 캐시 만료 상한
      * @param inactiveReason 비활성 사유(EXPIRED/REVOKED/INVALID) — 401 코드 구분 근거
+     * @param typ            토큰 종류(ACCESS 또는 WORKSPACE_TOKEN) — 부를 수 있는 경로를 가른다
+     * @param workspaceId    워크스페이스 액세스 토큰이 묶인 워크스페이스 — X-TOKEN-WORKSPACE-ID 주입 원천
+     * @param tokenId        워크스페이스 액세스 토큰 ID — X-ACCESS-TOKEN-ID 주입 원천
      */
-    public record IntrospectionResult(boolean active, String sub, String jti, Long exp, String inactiveReason) {
+    public record IntrospectionResult(boolean active, String sub, String jti, Long exp, String inactiveReason,
+                                      String typ, String workspaceId, String tokenId) {
+
+        /** 워크스페이스 액세스 토큰인가 — MCP 경로에서만 통한다 (03-gateway/requirements.md §2.3) */
+        public boolean workspaceToken() {
+            return "WORKSPACE_TOKEN".equals(typ);
+        }
     }
 }

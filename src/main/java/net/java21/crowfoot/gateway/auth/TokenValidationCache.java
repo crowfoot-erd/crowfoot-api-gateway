@@ -28,27 +28,42 @@ public class TokenValidationCache {
         this.ttl = properties.validationCacheTtl();
     }
 
-    /** @return 캐시에 유효한(active=true) 검증 결과가 있으면 sub 값 */
-    public Optional<String> subFor(String jti) {
-        CachedValidation cached = cache.get(jti);
+    /** @return 캐시에 유효한(active=true) 검증 결과가 있으면 그 결과 */
+    public Optional<Validated> find(String key) {
+        CachedValidation cached = cache.get(key);
         if (cached == null) {
             return Optional.empty();
         }
         if (cached.expiresAtMillis() <= clock.millis()) {   // 만료분 지연 제거
-            cache.remove(jti);
+            cache.remove(key);
             return Optional.empty();
         }
-        return Optional.of(cached.sub());
+        return Optional.of(cached.validated());
     }
 
-    public void put(String jti, String sub, Long expEpochSeconds) {
+    /** exp가 없는 토큰(무기한 워크스페이스 액세스 토큰)은 now + TTL까지만 캐시한다 */
+    public void put(String key, Validated validated, Long expEpochSeconds) {
         long expiresAt = clock.millis() + ttl.toMillis();
         if (expEpochSeconds != null) {
             expiresAt = Math.min(expiresAt, expEpochSeconds * 1000);
         }
-        cache.put(jti, new CachedValidation(sub, expiresAt));
+        cache.put(key, new CachedValidation(validated, expiresAt));
     }
 
-    private record CachedValidation(String sub, long expiresAtMillis) {
+    /**
+     * 검증된 토큰에서 헤더로 옮길 값 (03-gateway/requirements.md §2.1·2.3).
+     *
+     * @param sub         사용자 — X-USER-ID
+     * @param workspaceId 워크스페이스 액세스 토큰이 묶인 워크스페이스 — 웹 로그인 토큰이면 null
+     * @param tokenId     워크스페이스 액세스 토큰 ID — 웹 로그인 토큰이면 null
+     */
+    public record Validated(String sub, String workspaceId, String tokenId) {
+
+        public boolean workspaceToken() {
+            return workspaceId != null;
+        }
+    }
+
+    private record CachedValidation(Validated validated, long expiresAtMillis) {
     }
 }

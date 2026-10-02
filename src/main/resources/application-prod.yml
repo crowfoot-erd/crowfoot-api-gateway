@@ -24,6 +24,9 @@ crowfoot:
     auth-base-url: http://crowfoot-auth
     core-base-url: http://crowfoot-core-api
     database-manager-base-url: http://crowfoot-database-manager
+    mcp-base-url: http://crowfoot-mcp
+    # MCP 호스트 — 이 호스트에서는 /mcp/**만 받고, 다른 호스트의 /mcp는 받지 않는다 (03-gateway/requirements.md §3)
+    mcp-host: ${CROWFOOT_GATEWAY_MCP_HOST:crowfoot-mcp.java21.net}
 logging:
   level:
     net.java21.crowfoot.gateway: INFO

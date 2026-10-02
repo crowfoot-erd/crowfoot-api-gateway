@@ -29,6 +29,9 @@ public enum GatewayError {
     DOWNSTREAM_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "SERVICE_UNAVAILABLE",
             "서비스를 일시적으로 사용할 수 없습니다"),
 
+    /** 토큰 종류와 경로가 맞지 않는다 — 워크스페이스 액세스 토큰은 MCP 경로에서만, 웹 로그인 토큰은 그 밖에서만 (requirements.md §2.3) */
+    PERMISSION_DENIED(HttpStatus.FORBIDDEN, "PERMISSION_DENIED", "이 토큰으로는 부를 수 없는 경로입니다"),
+
     /** 미정의 경로 — api.md §3.5 */
     ROUTE_NOT_FOUND(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", "존재하지 않는 API 경로입니다"),
 

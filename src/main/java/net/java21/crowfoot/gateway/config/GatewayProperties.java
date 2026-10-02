@@ -12,6 +12,10 @@ import java.time.Duration;
  * @param coreBaseUrl        core 서버 기점
  * @param databaseManagerBaseUrl DB 매니저(crowfoot-database-manager) 기점 — 데이터 브라우저
  *                           (09-database-manager/00-data-browser.md Section 1.5)
+ * @param mcpBaseUrl         MCP 서버(crowfoot-mcp) 기점 (10-mcp/00-mcp-server.md Section 2)
+ * @param mcpHost            MCP 호스트 이름(crowfoot-mcp.java21.net) — 이 호스트에서는 /mcp/**만 받고, 다른 호스트의 /mcp는 받지 않는다.
+ *                           비어 있으면 호스트를 보지 않고 경로만으로 가른다(local — 호스트가 하나뿐이다) (03-gateway/requirements.md §3)
+ * @param mcpResponseTimeout MCP 라우트의 응답 타임아웃 — 응답이 스트리밍(SSE)일 수 있어 다른 라우트(10초)와 따로 길게 둔다. 기본 300초
  * @param validationCacheTtl 검증 캐시 TTL — 기본 30초, 상한 60초 (03-gateway/requirements.md §2)
  * @param rateLimit          IP 단위 고정창 rate limit (§4 — 수치는 프로퍼티로 관리)
  */
@@ -20,6 +24,9 @@ public record GatewayProperties(
         String authBaseUrl,
         String coreBaseUrl,
         String databaseManagerBaseUrl,
+        String mcpBaseUrl,
+        String mcpHost,
+        Duration mcpResponseTimeout,
         Duration validationCacheTtl,
         RateLimit rateLimit
 ) {
@@ -29,6 +36,12 @@ public record GatewayProperties(
     public GatewayProperties {
         if (validationCacheTtl != null && validationCacheTtl.compareTo(TTL_CEILING) > 0) {
             validationCacheTtl = TTL_CEILING;
+        }
+        if (mcpResponseTimeout == null) {
+            mcpResponseTimeout = Duration.ofSeconds(300);
+        }
+        if (mcpHost != null && mcpHost.isBlank()) {
+            mcpHost = null;
         }
     }
 

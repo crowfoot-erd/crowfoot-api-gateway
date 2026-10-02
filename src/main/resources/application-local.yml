@@ -21,6 +21,7 @@ crowfoot:
     auth-base-url: http://localhost:8081
     core-base-url: http://localhost:8082
     database-manager-base-url: http://localhost:8084
+    mcp-base-url: http://localhost:8085   # MCP 서버 — local은 호스트가 하나뿐이라 mcp-host를 두지 않는다(경로 /mcp/**만으로 가른다)
 
 logging:
   level:

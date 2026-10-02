@@ -18,16 +18,16 @@ class TokenValidationCacheTest {
 
     private final MutableClock clock = new MutableClock(NOW);
     private final TokenValidationCache cache = new TokenValidationCache(
-            clock, new GatewayProperties(null, null, null, TTL, null));
+            clock, new GatewayProperties(null, null, null, null, null, null, TTL, null));
 
     @Test
     @DisplayName("저장된 검증 결과는 TTL 내에 조회된다")
     void subFor_withinTtl_returnsSub() {
         // given
-        cache.put("key-1", "1001", null);
+        cache.put("key-1", new TokenValidationCache.Validated("1001", null, null), null);
 
         // when
-        Optional<String> sub = cache.subFor("key-1");
+        Optional<String> sub = cache.find("key-1").map(TokenValidationCache.Validated::sub);
 
         // then
         assertThat(sub).contains("1001");
@@ -37,11 +37,11 @@ class TokenValidationCacheTest {
     @DisplayName("TTL 경과 후에는 조회되지 않는다")
     void subFor_afterTtl_returnsEmpty() {
         // given
-        cache.put("key-1", "1001", null);
+        cache.put("key-1", new TokenValidationCache.Validated("1001", null, null), null);
 
         // when
         clock.advanceBy(TTL.plusSeconds(1));
-        Optional<String> sub = cache.subFor("key-1");
+        Optional<String> sub = cache.find("key-1").map(TokenValidationCache.Validated::sub);
 
         // then
         assertThat(sub).isEmpty();
@@ -52,13 +52,13 @@ class TokenValidationCacheTest {
     void subFor_expBeforeTtl_expiresAtExp() {
         // given
         long expEpochSeconds = NOW.plusSeconds(10).getEpochSecond();   // TTL(30s)보다 10s 후
-        cache.put("key-1", "1001", expEpochSeconds);
+        cache.put("key-1", new TokenValidationCache.Validated("1001", null, null), expEpochSeconds);
         clock.advanceBy(Duration.ofSeconds(5));
-        assertThat(cache.subFor("key-1")).isPresent();                  // exp 이전에는 유효
+        assertThat(cache.find("key-1").map(TokenValidationCache.Validated::sub)).isPresent();                  // exp 이전에는 유효
 
         // when
         clock.advanceBy(Duration.ofSeconds(6));                          // exp(10s) 경과
-        Optional<String> sub = cache.subFor("key-1");
+        Optional<String> sub = cache.find("key-1").map(TokenValidationCache.Validated::sub);
 
         // then
         assertThat(sub).isEmpty();
@@ -68,14 +68,14 @@ class TokenValidationCacheTest {
     @DisplayName("키마다 독립적으로 만료된다")
     void subFor_otherKey_isUnaffected() {
         // given
-        cache.put("key-1", "1001", NOW.plusSeconds(10).getEpochSecond());
-        cache.put("key-2", "1002", null);
+        cache.put("key-1", new TokenValidationCache.Validated("1001", null, null), NOW.plusSeconds(10).getEpochSecond());
+        cache.put("key-2", new TokenValidationCache.Validated("1002", null, null), null);
 
         // when
         clock.advanceBy(Duration.ofSeconds(11));                         // key-1만 만료
 
         // then
-        assertThat(cache.subFor("key-1")).isEmpty();
-        assertThat(cache.subFor("key-2")).contains("1002");
+        assertThat(cache.find("key-1").map(TokenValidationCache.Validated::sub)).isEmpty();
+        assertThat(cache.find("key-2").map(TokenValidationCache.Validated::sub)).contains("1002");
     }
 }

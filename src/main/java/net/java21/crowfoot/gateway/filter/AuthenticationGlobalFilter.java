@@ -43,6 +43,10 @@ import java.util.Optional;
 public class AuthenticationGlobalFilter implements GlobalFilter, Ordered {
 
     public static final String USER_ID_HEADER = "X-USER-ID";
+    /** 워크스페이스 액세스 토큰이 묶인 워크스페이스와 토큰 ID — MCP 라우트에서만 넣는다 (§2.3) */
+    public static final String TOKEN_WORKSPACE_HEADER = "X-TOKEN-WORKSPACE-ID";
+    public static final String ACCESS_TOKEN_HEADER = "X-ACCESS-TOKEN-ID";
+    public static final String MCP_PATH = "/mcp";
     private static final String INVALID_TOKEN_CHALLENGE = "Bearer error=\"invalid_token\"";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String REASON_EXPIRED = "EXPIRED";
@@ -56,7 +60,12 @@ public class AuthenticationGlobalFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         ServerHttpRequest.Builder mutated = request.mutate();
-        mutated.headers(headers -> headers.remove(USER_ID_HEADER));   // 위조 방지 — 항상 제거 먼저
+        // 위조 방지 — 항상 제거 먼저. 토큰 헤더 두 개도 같다(§2.3)
+        mutated.headers(headers -> {
+            headers.remove(USER_ID_HEADER);
+            headers.remove(TOKEN_WORKSPACE_HEADER);
+            headers.remove(ACCESS_TOKEN_HEADER);
+        });
 
         if (whitelist.matches(request.getMethod(), request.getPath().value())) {
             return chain.filter(with(exchange, mutated));
@@ -71,24 +80,56 @@ public class AuthenticationGlobalFilter implements GlobalFilter, Ordered {
         }
 
         String cacheKey = tokenHash(token);
-        Optional<String> cached = validationCache.subFor(cacheKey);
+        boolean mcpPath = isMcpPath(request.getPath().value());
+        Optional<TokenValidationCache.Validated> cached = validationCache.find(cacheKey);
         if (cached.isPresent()) {   // 캐시 히트 — 인증 서버 장애와 무관하게 통과 (api.md §3.4)
-            mutated.headers(headers -> headers.set(USER_ID_HEADER, cached.get()));
-            return chain.filter(with(exchange, mutated));
+            return proceed(exchange, chain, mutated, cached.get(), mcpPath);
         }
 
         return introspectionClient.introspect(token)
                 .flatMap(result -> {
                     if (result.active()) {
-                        validationCache.put(cacheKey, result.sub(), result.exp());
-                        mutated.headers(headers -> headers.set(USER_ID_HEADER, result.sub()));
-                        return chain.filter(with(exchange, mutated));
+                        TokenValidationCache.Validated validated = new TokenValidationCache.Validated(result.sub(),
+                                result.workspaceToken() ? result.workspaceId() : null,
+                                result.workspaceToken() ? result.tokenId() : null);
+                        // 워크스페이스 액세스 토큰인데 워크스페이스가 없으면 계약 밖 응답이다 — 통과시키지 않는다
+                        if (result.workspaceToken() && result.workspaceId() == null) {
+                            return reject(GatewayError.TOKEN_INVALID, INVALID_TOKEN_CHALLENGE);
+                        }
+                        validationCache.put(cacheKey, validated, result.exp());
+                        return proceed(exchange, chain, mutated, validated, mcpPath);
                     }
                     if (REASON_EXPIRED.equals(result.inactiveReason())) {
                         return reject(GatewayError.TOKEN_EXPIRED, INVALID_TOKEN_CHALLENGE);
                     }
                     return reject(GatewayError.TOKEN_INVALID, INVALID_TOKEN_CHALLENGE);   // 사유 미노출
                 });
+    }
+
+    /**
+     * 토큰 종류와 경로의 조합을 보고 헤더를 넣는다 (§2.3) — 워크스페이스 액세스 토큰은 MCP 경로에서만,
+     * 웹 로그인 토큰은 MCP 경로 밖에서만 통한다. 어긋나면 403이다.
+     */
+    private Mono<Void> proceed(ServerWebExchange exchange, GatewayFilterChain chain, ServerHttpRequest.Builder mutated,
+                               TokenValidationCache.Validated validated, boolean mcpPath) {
+        if (validated.workspaceToken() != mcpPath) {
+            return Mono.error(new GatewayRejectedException(GatewayError.PERMISSION_DENIED, null, null));
+        }
+        mutated.headers(headers -> {
+            headers.set(USER_ID_HEADER, validated.sub());
+            if (validated.workspaceToken()) {
+                headers.set(TOKEN_WORKSPACE_HEADER, validated.workspaceId());
+                if (validated.tokenId() != null) {
+                    headers.set(ACCESS_TOKEN_HEADER, validated.tokenId());
+                }
+            }
+        });
+        return chain.filter(with(exchange, mutated));
+    }
+
+    /** MCP 라우트의 경로인가 — /mcp 또는 /mcp/** (호스트는 라우트가 가른다) */
+    static boolean isMcpPath(String path) {
+        return path.equals(MCP_PATH) || path.startsWith(MCP_PATH + "/");
     }
 
     /** 검증 캐시 키 — 토큰 원문의 SHA-256 hex (Gateway 는 JWT 를 파싱하지 않으므로 jti 를 쓰지 않는다) */

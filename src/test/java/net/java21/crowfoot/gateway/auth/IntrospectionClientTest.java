@@ -54,7 +54,7 @@ class IntrospectionClientTest {
         StepVerifier.create(client.introspect(TOKEN))
                 // then
                 .expectNext(new IntrospectionClient.IntrospectionResult(
-                        true, "1001", "jti-1", 9999999999L, null))
+                        true, "1001", "jti-1", 9999999999L, null, "ACCESS", null, null))
                 .verifyComplete();
 
         RecordedRequest recorded = authServer.takeRequest();
@@ -79,7 +79,7 @@ class IntrospectionClientTest {
         // when // then
         StepVerifier.create(client.introspect(TOKEN))
                 .expectNext(new IntrospectionClient.IntrospectionResult(
-                        false, null, null, null, "EXPIRED"))
+                        false, null, null, null, "EXPIRED", null, null, null))
                 .verifyComplete();
     }
 

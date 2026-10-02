@@ -17,7 +17,7 @@ class FixedWindowRateLimiterTest {
 
     private final MutableClock clock = new MutableClock(NOW);
     private final FixedWindowRateLimiter rateLimiter = new FixedWindowRateLimiter(
-            clock, new GatewayProperties(null, null, null, null,
+            clock, new GatewayProperties(null, null, null, null, null, null, null,
             new GatewayProperties.RateLimit(3, 60, 30)));
 
     @Test
@@ -60,7 +60,7 @@ class FixedWindowRateLimiterTest {
     void tryAcquire_concurrentAttempts_allowsExactlyLimit() {
         // given
         FixedWindowRateLimiter limiter = new FixedWindowRateLimiter(
-                clock, new GatewayProperties(null, null, null, null,
+                clock, new GatewayProperties(null, null, null, null, null, null, null,
                 new GatewayProperties.RateLimit(50, 60, 30)));
         AtomicInteger allowed = new AtomicInteger();
 
