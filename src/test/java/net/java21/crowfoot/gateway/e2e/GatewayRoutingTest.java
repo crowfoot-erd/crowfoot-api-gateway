@@ -86,6 +86,26 @@ class GatewayRoutingTest {
     }
 
     @Test
+    @DisplayName("문서의 사이트 경로는 core-site 라우트(타임아웃 45초)로 core에 간다 — 다른 core 경로의 10초를 넘는 캡처를 기다린다")
+    void siteRoute_usesLongTimeout() throws InterruptedException {
+        // given — 보호 경로다: 토큰 검증을 통과해야 하류로 간다. 하류가 12초 뒤에 답해도 끊기지 않는다
+        authServer.enqueue(MockResponses.activeIntrospection("1001", "jti-site-1"));
+        coreServer.enqueue(MockResponses.downstreamOk().setHeadersDelay(12, java.util.concurrent.TimeUnit.SECONDS));
+        String token = TestTokenFactory.access("1001", "jti-site-1", 9_999_999_999L);
+
+        // when // then
+        webTestClient.mutate().responseTimeout(java.time.Duration.ofSeconds(30)).build()
+                .put().uri("/api/v1/core/workspaces/77/models/501/site")
+                .header("Authorization", "Bearer " + token)
+                .exchange()
+                .expectStatus().isOk();
+
+        RecordedRequest recorded = coreServer.takeRequest();
+        assertThat(recorded.getPath()).isEqualTo("/core/workspaces/77/models/501/site");
+        assertThat(recorded.getHeader("X-USER-ID")).isEqualTo("1001");
+    }
+
+    @Test
     @DisplayName("auth 라우트는 /api/v1/auth/** 를 /auth/** 로 재작성해 하류로 전달한다")
     void authRoute_stripsTwoSegments_downstreamSeesAuthPath() throws InterruptedException {
         // given

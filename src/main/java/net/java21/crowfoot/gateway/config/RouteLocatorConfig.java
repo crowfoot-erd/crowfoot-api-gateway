@@ -22,6 +22,12 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RouteLocatorConfig {
 
+    /**
+     * 사이트 등록·다시 가져오기 응답 타임아웃 — core가 캡처 서비스를 기다린다(최악 약 35초, core 읽기 제한 40초).
+     * 다른 core 경로의 10초로는 끊긴다(08-core/19-site-showcase.md Section 4)
+     */
+    static final long SITE_CAPTURE_TIMEOUT_MILLIS = 45_000;
+
     @Bean
     public RouteLocator crowfootRouteLocator(RouteLocatorBuilder builder, GatewayProperties properties) {
         String mcpHost = properties.mcpHost();
@@ -29,6 +35,12 @@ public class RouteLocatorConfig {
                 .route("auth", spec -> apiPath(spec, "/api/v1/auth/**", mcpHost)
                         .filters(filters -> filters.stripPrefix(2))
                         .uri(properties.authBaseUrl()))
+                // 문서의 사이트 — core 라우트보다 먼저 둔다(같은 기점, 타임아웃만 길다)
+                .route("core-site", spec -> apiPath(spec, "/api/v1/core/workspaces/*/models/*/site",
+                                "/api/v1/core/workspaces/*/models/*/site/capture", mcpHost)
+                        .filters(filters -> filters.stripPrefix(2))
+                        .metadata(RouteMetadataUtils.RESPONSE_TIMEOUT_ATTR, SITE_CAPTURE_TIMEOUT_MILLIS)
+                        .uri(properties.coreBaseUrl()))
                 .route("core", spec -> apiPath(spec, "/api/v1/core/**", mcpHost)
                         .filters(filters -> filters.stripPrefix(2))
                         .uri(properties.coreBaseUrl()))
@@ -44,7 +56,11 @@ public class RouteLocatorConfig {
 
     /** API 라우트 — MCP 호스트로 들어온 요청은 받지 않는다. MCP 호스트가 API 전체의 또 다른 입구가 되지 않게 한다 */
     private static BooleanSpec apiPath(PredicateSpec spec, String pattern, String mcpHost) {
-        BooleanSpec path = spec.path(pattern);
+        return apiPath(spec, pattern, null, mcpHost);
+    }
+
+    private static BooleanSpec apiPath(PredicateSpec spec, String pattern, String second, String mcpHost) {
+        BooleanSpec path = second == null ? spec.path(pattern) : spec.path(pattern, second);
         return mcpHost == null ? path : path.and().not(other -> other.host(mcpHost));
     }
 

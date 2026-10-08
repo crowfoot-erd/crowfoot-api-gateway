@@ -26,6 +26,8 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/Ab3xYz0123456789QrStUv")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/ddl")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares")).isTrue();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/showcase/sites")).isTrue();
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/showcase/sites/12/thumbnail")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/release-notes/recent")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/community/release-notes/9")).isTrue();
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/templates")).isTrue();
@@ -57,6 +59,8 @@ class AuthWhitelistTest {
         assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/reactions")).isFalse(); // 반응 상태 조회형 오남용 차단(초기화는 GET comments에 동봉)
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/reactions")).isFalse(); // 회원전용(§1.10.6) — 선택 인증 목록(OptionalAuthMatcher) 소관
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/shares/Ab3xYz0123456789QrStUv/ddl")).isFalse(); // DDL은 조회(GET) 전용
+        assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/showcase/sites/12/reports")).isFalse(); // 신고는 로그인(19-site-showcase §3.7)
+        assertThat(whitelist.matches(HttpMethod.GET, "/api/v1/core/admin/showcase/sites")).isFalse();
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/shares")).isFalse();
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/community/release-notes/9")).isFalse(); // 쓰기는 보호
         assertThat(whitelist.matches(HttpMethod.POST, "/api/v1/core/templates")).isFalse(); // 복제 등 쓰기는 보호

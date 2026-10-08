@@ -29,6 +29,8 @@ public class AuthWhitelist {
             new Entry(HttpMethod.GET, "/api/v1/core/shares"),          // core 공개 — 공유 갤러리 목록(08-core/02-model.md §1.10.5)
             new Entry(HttpMethod.GET, "/api/v1/core/community/release-notes/*"), // core 공개 — 릴리스 노트 공개 조회(recent·상세, 08-core/08-community.md §3.11)
             new Entry(HttpMethod.GET, "/api/v1/core/templates"),      // core 공개 — 템플릿 목록(복제는 POST라 보호, 08-core/09-templates.md §2.1)
+            new Entry(HttpMethod.GET, "/api/v1/core/showcase/sites"),             // core 공개 — 사이트 쇼케이스 목록(신고는 POST라 보호, 08-core/19-site-showcase.md §3.5)
+            new Entry(HttpMethod.GET, "/api/v1/core/showcase/sites/*/thumbnail"), // core 공개 — 사이트 썸네일 이미지(§3.6)
             new Entry(HttpMethod.POST, "/api/v1/core/metrics/visit")  // core 공개 — 접속 비콘 수집(관리자 조회는 보호, 08-core/10-metrics.md §3. 남용 방어는 레이트리밋에 위임)
     );
 
