@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Clock;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * IP 단위 고정창(fixed window) 카운터 — Phase 1 확정안 (03-gateway/requirements.md §4).
@@ -18,7 +19,7 @@ public class FixedWindowRateLimiter {
 
     private static final int CLEANUP_THRESHOLD = 10_000;   // 만료 엔트리 지연 청소 임계
 
-    private final ConcurrentHashMap<String, Window> windows = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Window> windows = new ConcurrentHashMap<>();
     private final GatewayProperties.RateLimit config;
     private final Clock clock;
 

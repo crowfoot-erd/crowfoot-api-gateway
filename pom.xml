@@ -30,6 +30,12 @@
         <!-- Boot 4.1 호환 train — 2025.1.2부터 Boot 4.1.0 지원 (구현 시 최신 patch 재확인) -->
         <spring-cloud.version>2025.1.2</spring-cloud.version>
         <mockwebserver.version>4.12.0</mockwebserver.version>
+        <!-- 정적 분석 (00-environment/static-analysis.md) — mvn clean compile spotbugs:check pmd:check pmd:cpd-check -->
+        <spotbugs-plugin.version>4.10.4.1</spotbugs-plugin.version>
+        <findsecbugs.version>1.14.0</findsecbugs.version>
+        <pmd-plugin.version>3.28.0</pmd-plugin.version>
+        <pmd.version>7.28.0</pmd.version>
+        <quality.failOnViolation>true</quality.failOnViolation>
     </properties>
 
     <dependencyManagement>
@@ -94,6 +100,52 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs-plugin.version}</version>
+                <configuration>
+                    <effort>Max</effort>
+                    <threshold>Medium</threshold>
+                    <excludeFilterFile>config/quality/spotbugs-exclude.xml</excludeFilterFile>
+                    <failOnError>${quality.failOnViolation}</failOnError>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.h3xstream.findsecbugs</groupId>
+                            <artifactId>findsecbugs-plugin</artifactId>
+                            <version>${findsecbugs.version}</version>
+                        </plugin>
+                    </plugins>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>${pmd-plugin.version}</version>
+                <configuration>
+                    <rulesets>
+                        <ruleset>config/quality/pmd-ruleset.xml</ruleset>
+                    </rulesets>
+                    <targetJdk>${java.version}</targetJdk>
+                    <printFailingErrors>true</printFailingErrors>
+                    <failOnViolation>${quality.failOnViolation}</failOnViolation>
+                    <excludeRoots>
+                        <excludeRoot>target/generated-sources</excludeRoot>
+                    </excludeRoots>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-java</artifactId>
+                        <version>${pmd.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-core</artifactId>
+                        <version>${pmd.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>

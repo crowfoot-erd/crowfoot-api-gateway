@@ -129,7 +129,7 @@ public class AuthenticationGlobalFilter implements GlobalFilter, Ordered {
 
     /** MCP 라우트의 경로인가 — /mcp 또는 /mcp/** (호스트는 라우트가 가른다) */
     static boolean isMcpPath(String path) {
-        return path.equals(MCP_PATH) || path.startsWith(MCP_PATH + "/");
+        return MCP_PATH.equals(path) || path.startsWith(MCP_PATH + "/");
     }
 
     /** 검증 캐시 키 — 토큰 원문의 SHA-256 hex (Gateway 는 JWT 를 파싱하지 않으므로 jti 를 쓰지 않는다) */

@@ -7,6 +7,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Access 토큰 검증 결과 캐시 — 인메모리(프로세스 내), 키는 토큰 원문의 SHA-256 해시 (03-gateway/requirements.md §2).
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class TokenValidationCache {
 
-    private final ConcurrentHashMap<String, CachedValidation> cache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, CachedValidation> cache = new ConcurrentHashMap<>();
     private final Clock clock;
     private final Duration ttl;
 

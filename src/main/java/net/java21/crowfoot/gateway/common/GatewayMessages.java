@@ -40,7 +40,9 @@ public class GatewayMessages {
                 if (stream == null) {
                     throw new IllegalStateException(path + " 이 클래스패스에 없습니다 — 4벌 동시 갱신 필요");
                 }
-                properties.load(new InputStreamReader(stream, StandardCharsets.UTF_8));
+                try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+                    properties.load(reader);
+                }
             } catch (IOException e) {
                 throw new IllegalStateException(path + " 읽기 실패", e);
             }

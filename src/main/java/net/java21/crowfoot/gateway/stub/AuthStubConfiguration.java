@@ -55,7 +55,7 @@ public class AuthStubConfiguration {
             }
         }
 
-        String inactiveReason = inactiveReason(reader, clock, claims);
+        String inactiveReason = inactiveReason(clock, claims);
         Map<String, Object> body = new HashMap<>();
         body.put("header", Map.of(
                 "isSuccessful", true, "resultCode", "SUCCESS", "resultMessage", "SUCCESS"));
@@ -73,7 +73,7 @@ public class AuthStubConfiguration {
     }
 
     /** @return null 이면 활성, 아니면 비활성 사유(INVALID/REVOKED/EXPIRED) */
-    private String inactiveReason(StubJwtPayloadReader reader, Clock clock, StubJwtPayloadReader.JwtClaims claims) {
+    private String inactiveReason(Clock clock, StubJwtPayloadReader.JwtClaims claims) {
         if (claims == null || claims.sub() == null) {
             return "INVALID";
         }

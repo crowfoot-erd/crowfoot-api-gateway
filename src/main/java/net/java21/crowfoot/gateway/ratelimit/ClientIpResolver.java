@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 @Component
 public class ClientIpResolver {
 
-    private static final Log log = LogFactory.getLog(ClientIpResolver.class);
+    private static final Log LOG = LogFactory.getLog(ClientIpResolver.class);
 
     /** X-Forwarded-For 항목 형태(IPv4/IPv6 리터럴) — IP가 아닌 값은 세션 IP·rate limit 키로 못 쓰게 한다 */
     private static final Pattern IP_LIKE = Pattern.compile("[0-9A-Fa-f:.]+");
@@ -57,7 +57,7 @@ public class ClientIpResolver {
         String forwarded = exchange.getRequest().getHeaders().getFirst(X_FORWARDED_FOR);
         if (trustedProxies == null) {
             if (forwarded != null) {
-                log.info("X-Forwarded-For 수신했으나 trusted-proxies 미설정으로 폐기한다 — 전단 프록시가 있다면 설정해야 클라이언트 IP가 전달된다");
+                LOG.info("X-Forwarded-For 수신했으나 trusted-proxies 미설정으로 폐기한다 — 전단 프록시가 있다면 설정해야 클라이언트 IP가 전달된다");
             }
             return Optional.empty();
         }
@@ -66,7 +66,7 @@ public class ClientIpResolver {
         }
         if (!trustedProxies.isTrusted(remote.getAddress().getHostAddress())) {
             if (forwarded != null) {
-                log.info("비신뢰 소스(" + remote.getAddress().getHostAddress() + ")의 X-Forwarded-For 폐기 — 위조 방지");
+                LOG.info("비신뢰 소스(" + remote.getAddress().getHostAddress() + ")의 X-Forwarded-For 폐기 — 위조 방지");
             }
             return Optional.empty();
         }
@@ -77,7 +77,7 @@ public class ClientIpResolver {
         if (first.isEmpty() || !IP_LIKE.matcher(first).matches()) {
             return Optional.empty();
         }
-        log.debug("신뢰 프록시 경유 클라이언트 IP=" + first);
+        LOG.debug("신뢰 프록시 경유 클라이언트 IP=" + first);
         return Optional.of(first);
     }
 

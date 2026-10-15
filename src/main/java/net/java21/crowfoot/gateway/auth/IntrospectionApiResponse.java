@@ -27,7 +27,7 @@ public record IntrospectionApiResponse(Header header, Response response) {
             Long iat,
             Long exp,
             String inactiveReason,
-            /** 워크스페이스 액세스 토큰(typ WORKSPACE_TOKEN)에만 있다 — 02-auth/api.md Section 4.1 */
+            /* 워크스페이스 액세스 토큰(typ WORKSPACE_TOKEN)에만 있다 — 02-auth/api.md Section 4.1 */
             String workspaceId,
             String tokenId
     ) {
